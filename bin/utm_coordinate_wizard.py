@@ -899,7 +899,7 @@ class ResultCard(tk.Frame):
 #  UI strings (PUBLIC_BUILD strips parameter / method detail)
 # ─────────────────────────────────────────────────────────────────────────────
 UTM_APP_NAME = "UTM Coordinate Wizard"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 
 
 def app_name() -> str:
