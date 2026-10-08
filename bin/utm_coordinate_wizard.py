@@ -1472,7 +1472,7 @@ class CassiniApp(tk.Tk):
         tk.Label(fr, text="Geo datum :", bg=PANEL_BG, fg=TEXT_DIM,
                  font=FONT_SM).pack(side="left", padx=(0, 8))
         rb = self._cv_rb_kwargs(on_change)
-        for txt, val in [("PMGSN94", "PMGSN94"), ("GDM2000", "GDM"), ("MRT48", "MRT48")]:
+        for txt, val in [("WGS84", "WGS84"), ("PMGSN94", "PMGSN94"), ("GDM2000", "GDM"), ("MRT48", "MRT48")]:
             tk.Radiobutton(fr, text=txt, variable=var, value=val,
                            **rb).pack(side="left", padx=6)
         return fr
@@ -1505,6 +1505,8 @@ class CassiniApp(tk.Tk):
 
     def _g_geo_datum(self):
         fam = self.g_from_geo_family.get()
+        if fam == "WGS84":
+            return "WGS84"
         if fam == "GDM":
             return self.g_from_gdm_rev.get()
         if fam == "MRT48":
@@ -1538,7 +1540,7 @@ class CassiniApp(tk.Tk):
         if sys_name == "Geographic (Lat/Lon)":
             d = self._g_geo_datum()
             ell = ("Modified Everest" if d == "MRT48"
-                   else "WGS84" if d == "PMGSN94" else "GRS80")
+                   else "WGS84" if d in ("WGS84", "PMGSN94") else "GRS80")
             return f"Datum: {d}   Ellipsoid: {ell}"
         if sys_name == "UTM":
             return "Datum: WGS84   Ellipsoid: WGS84   Standard UTM (k₀=0.9996)"
@@ -1680,7 +1682,7 @@ class CassiniApp(tk.Tk):
         self.g_from_zone = tk.StringVar()
         self.g_from_cas_family = tk.StringVar(value="MRT48")
         self.g_from_gdm_rev = tk.StringVar(value="GDM2009")
-        self.g_from_geo_family = tk.StringVar(value="PMGSN94")
+        self.g_from_geo_family = tk.StringVar(value="WGS84")
         self.g_rso_family = tk.StringVar(value="GDM")
         self.g_mode = tk.StringVar(value="dd")
         self.g_lat_dd = tk.StringVar()
@@ -1762,7 +1764,7 @@ class CassiniApp(tk.Tk):
         self.g_from_geo_fr = tk.Frame(opts, bg=PANEL_BG)
         tk.Label(self.g_from_geo_fr, text="Geo datum :", bg=PANEL_BG, fg=TEXT_DIM,
                  font=FONT_SM).pack(side="left", padx=(0, 8))
-        for txt, val in [("PMGSN94", "PMGSN94"), ("GDM2000", "GDM"), ("MRT48", "MRT48")]:
+        for txt, val in [("WGS84", "WGS84"), ("PMGSN94", "PMGSN94"), ("GDM2000", "GDM"), ("MRT48", "MRT48")]:
             tk.Radiobutton(self.g_from_geo_fr, text=txt, variable=self.g_from_geo_family,
                            value=val, **rb).pack(side="left", padx=6)
         self.g_from_gdm_rev_fr = tk.Frame(opts, bg=PANEL_BG)
@@ -1963,8 +1965,8 @@ class CassiniApp(tk.Tk):
         self.cv_to_cas_family = tk.StringVar(value="MRT48")
         self.cv_from_gdm_rev = tk.StringVar(value="GDM2009")
         self.cv_to_gdm_rev = tk.StringVar(value="GDM2009")
-        self.cv_from_geo_family = tk.StringVar(value="PMGSN94")
-        self.cv_to_geo_family = tk.StringVar(value="PMGSN94")
+        self.cv_from_geo_family = tk.StringVar(value="WGS84")
+        self.cv_to_geo_family = tk.StringVar(value="WGS84")
         self.cv_rso_family = tk.StringVar(value="GDM")
         rb_kw = dict(bg=PANEL_BG, fg=TEXT_MAIN, selectcolor=INPUT_BG,
                      activebackground=PANEL_BG, activeforeground=ACCENT,
@@ -1974,7 +1976,7 @@ class CassiniApp(tk.Tk):
             fr = tk.Frame(ft, bg=PANEL_BG)
             tk.Label(fr, text="Geo datum :", bg=PANEL_BG, fg=TEXT_DIM,
                      font=FONT_SM).pack(side="left", padx=(0, 8))
-            for txt, val in [("PMGSN94", "PMGSN94"), ("GDM2000", "GDM"), ("MRT48", "MRT48")]:
+            for txt, val in [("WGS84", "WGS84"), ("PMGSN94", "PMGSN94"), ("GDM2000", "GDM"), ("MRT48", "MRT48")]:
                 tk.Radiobutton(fr, text=txt, variable=var, value=val,
                                **rb_kw).pack(side="left", padx=6)
             return fr
@@ -2278,6 +2280,8 @@ class CassiniApp(tk.Tk):
     def _geo_datum(self, side):
         fam = (self.cv_from_geo_family if side == "from"
                else self.cv_to_geo_family).get()
+        if fam == "WGS84":
+            return "WGS84"
         if fam == "GDM":
             return self._gdm_datum(side)
         if fam == "MRT48":
@@ -2397,7 +2401,7 @@ class CassiniApp(tk.Tk):
             d = self._geo_datum(side)
             if d == "MRT48":
                 ell = "Modified Everest"
-            elif d == "PMGSN94":
+            elif d in ("WGS84", "PMGSN94"):
                 ell = "WGS84"
             else:
                 ell = "GRS80"
@@ -2937,8 +2941,8 @@ class CassiniApp(tk.Tk):
         self.batch_to_cas_family = tk.StringVar(value="MRT48")
         self.batch_from_gdm_rev = tk.StringVar(value="GDM2009")
         self.batch_to_gdm_rev = tk.StringVar(value="GDM2009")
-        self.batch_from_geo_family = tk.StringVar(value="PMGSN94")
-        self.batch_to_geo_family = tk.StringVar(value="PMGSN94")
+        self.batch_from_geo_family = tk.StringVar(value="WGS84")
+        self.batch_to_geo_family = tk.StringVar(value="WGS84")
         self.batch_rso_family = tk.StringVar(value="GDM")
         mrt48_zones = self._zones_for("MRT48")
         z0 = mrt48_zones[0] if mrt48_zones else ""
@@ -3157,6 +3161,8 @@ class CassiniApp(tk.Tk):
     def _batch_geo_datum(self, side):
         fam = (self.batch_from_geo_family if side == "from"
                else self.batch_to_geo_family).get()
+        if fam == "WGS84":
+            return "WGS84"
         if fam == "GDM":
             return (self.batch_from_gdm_rev if side == "from"
                     else self.batch_to_gdm_rev).get()
