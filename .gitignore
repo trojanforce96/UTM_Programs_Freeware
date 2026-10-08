@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+
+# Sealed source — never commit (builds copy it beside the lecturer exe)
+Malaysia.xml
+
+# Build output
+exe/
+dist/
+
+# Update packages: track configs, not the big binaries (Releases hold these)
+updates/**/*.exe

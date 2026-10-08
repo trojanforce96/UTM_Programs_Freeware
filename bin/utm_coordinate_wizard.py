@@ -914,30 +914,15 @@ def footer_text() -> str:
 
 
 def _default_update_config() -> dict:
-    """GitHub Releases only (private repo) — lecturer exe; used when ea_update.json
-    is missing beside the EXE. No NAS: UTM Classroom is not on the EA office share."""
+    """GitHub Releases only (private repo UTM_Programs_Freeware) — lecturer exe;
+    used when ea_update.json is missing beside the EXE.
+    No NAS: UTM Classroom is not on the EA office share."""
     github = {
         "owner": "trojanforce96",
-        "repo": "EA_ASCII",
+        "repo": "UTM_Programs_Freeware",
         "tag": "update-UTM_Coordinate_Wizard_Lecturer",
         "token_env": "EA_GITHUB_TOKEN",
     }
-    try:
-        _tools = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools")
-        if _tools not in sys.path:
-            sys.path.insert(0, _tools)
-        from ea_update_config import load_github_settings, release_tag_for_app
-
-        settings = load_github_settings()
-        if settings.get("owner"):
-            github = {
-                "owner": settings["owner"],
-                "repo": settings["repo"],
-                "tag": release_tag_for_app("UTM_Coordinate_Wizard_Lecturer"),
-                "token_env": "EA_GITHUB_TOKEN",
-            }
-    except Exception:
-        pass
     return {
         "manifest_file": "manifest.json",
         "check_on_startup": True,

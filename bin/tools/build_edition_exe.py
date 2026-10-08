@@ -23,12 +23,13 @@ sys.stdout.reconfigure(encoding="utf-8")
 _TOOLS = os.path.dirname(os.path.abspath(__file__))
 BIN = os.path.dirname(_TOOLS)
 ROOT = os.path.dirname(BIN)
-EA_ROOT = os.path.dirname(ROOT)  # EA_ASCII — shared tooling + ea_github.json
 DIST = os.path.join(ROOT, "dist")
 EXE_OUT = os.path.join(ROOT, "exe")
 BRAND = os.path.join(BIN, "branding")
 UPDATE_ROOT = os.path.join(ROOT, "updates")
 LECTURER_APP_FOLDER = "UTM_Coordinate_Wizard_Lecturer"
+GITHUB_OWNER = "trojanforce96"
+GITHUB_REPO = "UTM_Programs_Freeware"
 if BIN not in sys.path:
     sys.path.insert(0, BIN)
 from app_paths import GEOID_GFF_NAME, GEOID_GFF_LEGACY, GEOID_GSF_NAME
@@ -114,17 +115,9 @@ def _read_app_version() -> str:
 
 
 def _github_update_config() -> dict:
-    """GitHub-Releases-only update config for the lecturer exe (no NAS)."""
-    owner, repo = "trojanforce96", "EA_ASCII"
-    gh_json = os.path.join(EA_ROOT, "ea_github.json")
-    if os.path.isfile(gh_json):
-        try:
-            with open(gh_json, encoding="utf-8") as f:
-                data = json.load(f)
-            owner = str(data.get("owner", "") or owner).strip() or owner
-            repo = str(data.get("repo", "") or repo).strip() or repo
-        except (OSError, json.JSONDecodeError):
-            pass
+    """GitHub-Releases-only update config for the lecturer exe (no NAS).
+    Channel lives on the UTM_Programs_Freeware repo (tag update-…)."""
+    owner, repo = GITHUB_OWNER, GITHUB_REPO
     return {
         "manifest_file": "manifest.json",
         "check_on_startup": True,
