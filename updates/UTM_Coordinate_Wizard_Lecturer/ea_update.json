@@ -6,7 +6,7 @@
   "download_timeout": 300,
   "github": {
     "owner": "trojanforce96",
-    "repo": "EA_ASCII",
+    "repo": "UTM_Programs_Freeware",
     "tag": "update-UTM_Coordinate_Wizard_Lecturer",
     "token_env": "EA_GITHUB_TOKEN"
   }

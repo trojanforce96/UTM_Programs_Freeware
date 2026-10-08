@@ -293,7 +293,7 @@ def build(edition_name: str):
     print(f"  Version : {version}")
     if edition_name == "lecturer":
         _write_lecturer_update_package(version, exe_path)
-        print("  GitHub publish (after PC test): python bin/tools/publish_github_update.py UTM_Coordinate_Wizard_Lecturer")
+        print("  GitHub publish (after PC test): python bin/tools/publish_github_update.py")
         from app_paths import malaysia_params_dir
         xml_src = os.path.join(malaysia_params_dir(), "Malaysia.xml")
         xml_dst = os.path.join(EXE_OUT, "Malaysia.xml")
