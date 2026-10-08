@@ -50,11 +50,18 @@ UTM-LOGO.png / UTM-LOGO-FULL.png into bin/branding/assets/ (User-Agent required;
 urllib previously got HTTP 403). Lecturer + student logo.png / icon.ico / icon_win.png
 are present under bin/branding/lecturer/ and bin/branding/student/.
 
+REBUILT 2026-10-08
+------------------
+- exe/UTM_Coordinate_Wizard_Student.exe (30.7 MB) + exe/UTM_Coordinate_Wizard_Lecturer.exe (61.5 MB)
+  built OK; both launch-tested. Malaysia.xml sits in Misc/ (single source of truth;
+  build tools read it via app_paths.malaysia_params_dir()).
+- bin/datum_transform.py synced with EA bin (canon WGS84 -> GDM2000 zero Helmert,
+  matching EA Coordinate Wizard 1.1.0 behaviour for UTM-grid and KML-export paths).
+- bin/pyi_rth_00_win_boot.py restored from EA bin (required PyInstaller runtime hook).
+
 STILL MISSING / INCOMPLETE
 --------------------------
-- exe/UTM_Coordinate_Wizard_Lecturer.exe and exe/UTM_Coordinate_Wizard_Student.exe (not rebuilt yet)
 - dist/UTM_Coordinate_Wizard_Lecturer/ package output (run bat/9 after building exe)
-- Sealed geoid *.utm beside bin (run seal_geoid.py before student exe build)
 - Original _split_utm_classroom.py body from Jul 10 (only reconstructed MOVES list)
 - bin/build_edition_exe.py and bin/generate_branding.py at EA bin root (pre-split copies; tools/ versions restored)
 - bin/tools/ea_coordinate_wizard_xml_edition.py (seen in Cursor history; not restored — optional)

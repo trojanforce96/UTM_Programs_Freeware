@@ -103,9 +103,12 @@ def build():
     else:
         print("  Using existing branding assets")
 
-    xml = os.path.join(ROOT, "Malaysia.xml")
+    if BIN not in sys.path:
+        sys.path.insert(0, BIN)
+    from app_paths import malaysia_params_dir
+    xml = os.path.join(malaysia_params_dir(), "Malaysia.xml")
     if not os.path.isfile(xml):
-        raise SystemExit("ERROR: Malaysia.xml required in project root.")
+        raise SystemExit(f"ERROR: Malaysia.xml required in {malaysia_params_dir()}.")
 
     _ensure_lecturer_exe()
 

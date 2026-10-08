@@ -40,12 +40,14 @@ def _pip(*packages):
 
 
 def _run_seal():
-    xml = os.path.join(ROOT, "Malaysia.xml")
-    utm = os.path.join(ROOT, MALAYSIA_SEALED_UTM)
+    from app_paths import malaysia_params_dir
+    params = malaysia_params_dir()
+    xml = os.path.join(params, "Malaysia.xml")
+    utm = os.path.join(params, MALAYSIA_SEALED_UTM)
     if not os.path.isfile(xml):
         if os.path.isfile(utm):
             return utm
-        raise SystemExit(f"ERROR: Need Malaysia.xml or {MALAYSIA_SEALED_UTM} in project root.")
+        raise SystemExit(f"ERROR: Need Malaysia.xml or {MALAYSIA_SEALED_UTM} in {params}.")
     if not os.path.isfile(utm) or os.path.getmtime(xml) > os.path.getmtime(utm):
         print(f"  Sealing Malaysia.xml → {MALAYSIA_SEALED_UTM} …")
         subprocess.check_call(
@@ -222,7 +224,8 @@ def build(edition_name: str):
     print(f"  Exe  : {exe_path}")
     print(f"  Size : {size_mb:.1f} MB")
     if edition_name == "lecturer":
-        xml_src = os.path.join(ROOT, "Malaysia.xml")
+        from app_paths import malaysia_params_dir
+        xml_src = os.path.join(malaysia_params_dir(), "Malaysia.xml")
         xml_dst = os.path.join(EXE_OUT, "Malaysia.xml")
         if os.path.isfile(xml_src):
             import shutil

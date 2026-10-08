@@ -12,8 +12,9 @@ _TRANSFORMS = {}
 def canon_datum(datum):
     """Map UI / legacy datum labels to Malaysia.xml graph keys (JUPEM PKPUP 2021)."""
     if datum == "WGS84":
-        # Peninsula: PMGSN94 is the published WGS84 scientific network (Table 1).
-        return "PMGSN94"
+        # Common GNSS practice: GDM2000 ↔ WGS84 is a zero Helmert (JUPEM / GDM frame).
+        # PMGSN94 stays a separate JUPEM peninsula frame (~1.65 m from GDM2000).
+        return "GDM2000"
     if datum == "MRT68":
         return "MRT48"
     return datum
