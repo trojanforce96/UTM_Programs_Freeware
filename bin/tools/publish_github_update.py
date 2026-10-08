@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Publish the local updates/UTM_Coordinate_Wizard_Lecturer/ package to the stable
-GitHub release tag on the UTM_Programs_Freeware repo.
+Publish local updates/UTM_Coordinate_Wizard_<Edition>/ packages to the stable
+GitHub release tags on the UTM_Programs_Freeware repo.
 
-  python bin/tools/publish_github_update.py
-  python bin/tools/publish_github_update.py --notes "Fixed Cassini zone table"
+  python bin/tools/publish_github_update.py              # both editions
+  python bin/tools/publish_github_update.py lecturer
+  python bin/tools/publish_github_update.py student --notes "Fixed Cassini zone table"
 
 Requires:
   - EA_GITHUB_TOKEN env var (classic or fine-grained PAT with Contents: write / releases)
@@ -29,9 +30,10 @@ ROOT = os.path.dirname(os.path.dirname(_TOOLS))  # UTM_Classroom/
 
 GITHUB_OWNER = "trojanforce96"
 GITHUB_REPO = "UTM_Programs_Freeware"
-APP = "UTM_Coordinate_Wizard_Lecturer"
-TAG = f"update-{APP}"
-PACKAGE_DIR = os.path.join(ROOT, "updates", APP)
+APPS = {
+    "lecturer": "UTM_Coordinate_Wizard_Lecturer",
+    "student": "UTM_Coordinate_Wizard_Student",
+}
 
 # Skip sidecars that are not needed on the release channel
 SKIP_NAMES = {"ea_update.json", "ea_update.json.example", "version.txt"}
@@ -134,14 +136,15 @@ def _read_version(folder: str) -> str:
     return "unknown"
 
 
-def _notes(version: str, notes_arg: str) -> tuple[str, str]:
+def _notes(app: str, version: str, notes_arg: str) -> tuple[str, str]:
     """Return (release_name, release_body)."""
-    name = f"UTM Coordinate Wizard Lecturer {version}"
+    edition = "Lecturer" if app.endswith("Lecturer") else "Student"
+    name = f"UTM Coordinate Wizard {edition} {version}"
     if notes_arg.strip():
         return name, notes_arg.strip() + "\n"
     default = (
         f"## {name}\n\n"
-        "Lecturer live auto-update channel. Overwritten when a tested build is published.\n"
+        f"{edition} live auto-update channel. Overwritten when a tested build is published.\n"
     )
     return name, default
 
@@ -211,8 +214,8 @@ def _files_to_upload(folder: str) -> list[str]:
     return [by_asset[k] for k in sorted(by_asset)]
 
 
-def publish(notes: str = "") -> None:
-    folder = PACKAGE_DIR
+def publish(app: str, notes: str = "") -> None:
+    folder = os.path.join(ROOT, "updates", app)
     if not os.path.isdir(folder):
         raise SystemExit(f"ERROR: Missing folder: {folder}\nBuild the EXE first.")
     man = os.path.join(folder, "manifest.json")
@@ -220,11 +223,12 @@ def publish(notes: str = "") -> None:
         raise SystemExit(f"ERROR: Missing {man} — build first.")
 
     version = _read_version(folder)
-    rel_name, rel_body = _notes(version, notes)
+    rel_name, rel_body = _notes(app, version, notes)
 
     token = _token()
-    owner, repo, tag = GITHUB_OWNER, GITHUB_REPO, TAG
-    print(f"Publishing {APP} v{version} → {owner}/{repo} tag {tag}")
+    owner, repo = GITHUB_OWNER, GITHUB_REPO
+    tag = f"update-{app}"
+    print(f"Publishing {app} v{version} → {owner}/{repo} tag {tag}")
 
     release = _get_release(owner, repo, tag, token)
     if not release:
@@ -277,12 +281,16 @@ def publish(notes: str = "") -> None:
             _upload_asset(upload_url, path, token, asset_name=asset_name)
 
     print()
-    print("Done. Lecturer live auto-update channel updated (users need EA_GITHUB_TOKEN).")
+    print(f"Done. {app} live auto-update channel updated.")
+    print("Repo is public — users need no token.")
 
 
 def main():
     argv = sys.argv[1:]
+    which = ""
     notes = ""
+    if argv and not argv[0].startswith("-"):
+        which = argv.pop(0).strip().lower()
     if "--notes" in argv:
         i = argv.index("--notes")
         raw = " ".join(argv[i + 1 :]) if i + 1 < len(argv) else ""
@@ -290,7 +298,16 @@ def main():
             notes = open(raw, encoding="utf-8").read()
         else:
             notes = raw
-    publish(notes=notes)
+    if which in ("", "both", "all"):
+        targets = list(APPS)
+    elif which in APPS:
+        targets = [which]
+    else:
+        raise SystemExit(
+            "Usage: python bin/tools/publish_github_update.py [lecturer|student|both] [--notes \"...\"]"
+        )
+    for edition in targets:
+        publish(APPS[edition], notes=notes)
 
 
 if __name__ == "__main__":

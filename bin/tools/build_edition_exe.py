@@ -27,7 +27,6 @@ DIST = os.path.join(ROOT, "dist")
 EXE_OUT = os.path.join(ROOT, "exe")
 BRAND = os.path.join(BIN, "branding")
 UPDATE_ROOT = os.path.join(ROOT, "updates")
-LECTURER_APP_FOLDER = "UTM_Coordinate_Wizard_Lecturer"
 GITHUB_OWNER = "trojanforce96"
 GITHUB_REPO = "UTM_Programs_Freeware"
 if BIN not in sys.path:
@@ -114,9 +113,9 @@ def _read_app_version() -> str:
     return m.group(1)
 
 
-def _github_update_config() -> dict:
-    """GitHub-Releases-only update config for the lecturer exe (no NAS).
-    Channel lives on the UTM_Programs_Freeware repo (tag update-…)."""
+def _github_update_config(app_folder: str) -> dict:
+    """GitHub-Releases-only update config (no NAS).
+    Channel lives on the UTM_Programs_Freeware repo (tag update-<app>)."""
     owner, repo = GITHUB_OWNER, GITHUB_REPO
     return {
         "manifest_file": "manifest.json",
@@ -127,15 +126,16 @@ def _github_update_config() -> dict:
         "github": {
             "owner": owner,
             "repo": repo,
-            "tag": f"update-{LECTURER_APP_FOLDER}",
+            "tag": f"update-{app_folder}",
             "token_env": "EA_GITHUB_TOKEN",
         },
     }
 
 
-def _write_lecturer_update_package(version: str, exe_path: str):
-    """updates/UTM_Coordinate_Wizard_Lecturer/ — publish via publish_github_update.py."""
-    out = os.path.join(UPDATE_ROOT, LECTURER_APP_FOLDER)
+def _write_update_package(edition_name: str, version: str, exe_path: str):
+    """updates/UTM_Coordinate_Wizard_<Edition>/ — publish via publish_github_update.py."""
+    app_folder = f"UTM_Coordinate_Wizard_{edition_name.capitalize()}"
+    out = os.path.join(UPDATE_ROOT, app_folder)
     os.makedirs(out, exist_ok=True)
     exe_name = os.path.basename(exe_path)
 
@@ -143,10 +143,10 @@ def _write_lecturer_update_package(version: str, exe_path: str):
         f.write(version + "\n")
 
     manifest = {
-        "app": "utm_coordinate_wizard_lecturer",
+        "app": f"utm_coordinate_wizard_{edition_name}",
         "version": version,
         "exe_name": exe_name,
-        "changelog": "UTM Coordinate Wizard (Lecturer Edition) update.",
+        "changelog": f"UTM Coordinate Wizard ({edition_name.capitalize()} Edition) update.",
         "files": [{"name": exe_name}],
     }
     with open(os.path.join(out, "manifest.json"), "w", encoding="utf-8") as f:
@@ -154,7 +154,7 @@ def _write_lecturer_update_package(version: str, exe_path: str):
         f.write("\n")
 
     with open(os.path.join(out, "ea_update.json"), "w", encoding="utf-8") as f:
-        json.dump(_github_update_config(), f, indent=2)
+        json.dump(_github_update_config(app_folder), f, indent=2)
         f.write("\n")
 
     import shutil
@@ -291,9 +291,9 @@ def build(edition_name: str):
     print(f"  Exe  : {exe_path}")
     print(f"  Size : {size_mb:.1f} MB")
     print(f"  Version : {version}")
+    _write_update_package(edition_name, version, exe_path)
+    print(f"  GitHub publish (after PC test): python bin/tools/publish_github_update.py {edition_name}")
     if edition_name == "lecturer":
-        _write_lecturer_update_package(version, exe_path)
-        print("  GitHub publish (after PC test): python bin/tools/publish_github_update.py")
         from app_paths import malaysia_params_dir
         xml_src = os.path.join(malaysia_params_dir(), "Malaysia.xml")
         xml_dst = os.path.join(EXE_OUT, "Malaysia.xml")

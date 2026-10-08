@@ -1,0 +1,11 @@
+{
+  "app": "utm_coordinate_wizard_student",
+  "version": "1.0.0",
+  "exe_name": "UTM_Coordinate_Wizard_Student.exe",
+  "changelog": "UTM Coordinate Wizard (Student Edition) update.",
+  "files": [
+    {
+      "name": "UTM_Coordinate_Wizard_Student.exe"
+    }
+  ]
+}

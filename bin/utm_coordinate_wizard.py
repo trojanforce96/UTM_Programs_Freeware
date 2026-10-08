@@ -914,13 +914,15 @@ def footer_text() -> str:
 
 
 def _default_update_config() -> dict:
-    """GitHub Releases only (private repo UTM_Programs_Freeware) — lecturer exe;
+    """GitHub Releases only (public repo UTM_Programs_Freeware) — frozen exes;
     used when ea_update.json is missing beside the EXE.
-    No NAS: UTM Classroom is not on the EA office share."""
+    Each edition has its own release tag. No NAS: UTM Classroom is not on
+    the EA office share."""
+    edition = "Lecturer" if is_lecturer() else "Student"
     github = {
         "owner": "trojanforce96",
         "repo": "UTM_Programs_Freeware",
-        "tag": "update-UTM_Coordinate_Wizard_Lecturer",
+        "tag": f"update-UTM_Coordinate_Wizard_{edition}",
         "token_env": "EA_GITHUB_TOKEN",
     }
     return {
@@ -1079,12 +1081,9 @@ class CassiniApp(tk.Tk):
         self.after(3000, self._start_update_check)
 
     def _start_update_check(self):
-        """Lecturer EXE only — private GitHub Releases (token via EA_GITHUB_TOKEN).
-
-        Student edition and dev scripts never check: students get fresh zips
-        from the lecturer instead.
-        """
-        if not (getattr(sys, "frozen", False) and is_lecturer()):
+        """Frozen EXEs (lecturer + student) — public GitHub Releases on
+        UTM_Programs_Freeware; no token needed. Dev scripts never check."""
+        if not getattr(sys, "frozen", False):
             return
 
         def _is_local_disk(path: str) -> bool:
