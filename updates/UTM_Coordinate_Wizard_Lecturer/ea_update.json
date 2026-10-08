@@ -1,0 +1,13 @@
+{
+  "manifest_file": "manifest.json",
+  "check_on_startup": true,
+  "auto_apply": false,
+  "timeout": 30,
+  "download_timeout": 300,
+  "github": {
+    "owner": "trojanforce96",
+    "repo": "EA_ASCII",
+    "tag": "update-UTM_Coordinate_Wizard_Lecturer",
+    "token_env": "EA_GITHUB_TOKEN"
+  }
+}

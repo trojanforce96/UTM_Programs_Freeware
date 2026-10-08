@@ -1,0 +1,11 @@
+{
+  "app": "utm_coordinate_wizard_lecturer",
+  "version": "1.0.0",
+  "exe_name": "UTM_Coordinate_Wizard_Lecturer.exe",
+  "changelog": "UTM Coordinate Wizard (Lecturer Edition) update.",
+  "files": [
+    {
+      "name": "UTM_Coordinate_Wizard_Lecturer.exe"
+    }
+  ]
+}

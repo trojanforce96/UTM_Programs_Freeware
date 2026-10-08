@@ -10,7 +10,7 @@ import win_boot  # noqa: F401 — before tkinter (Windows taskbar icon)
 
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
-import math, csv, os, sys, zipfile
+import math, csv, os, sys, threading, zipfile
 
 from app_paths import edition, is_lecturer, is_student
 from ui_theme import (
@@ -899,6 +899,7 @@ class ResultCard(tk.Frame):
 #  UI strings (PUBLIC_BUILD strips parameter / method detail)
 # ─────────────────────────────────────────────────────────────────────────────
 UTM_APP_NAME = "UTM Coordinate Wizard"
+APP_VERSION = "1.0.0"
 
 
 def app_name() -> str:
@@ -910,6 +911,44 @@ def footer_text() -> str:
         "Copyright © 2026 Created and Modified by Firdaus Shah  |  "
         "From UTM Student, For UTM Student."
     )
+
+
+def _default_update_config() -> dict:
+    """GitHub Releases only (private repo) — lecturer exe; used when ea_update.json
+    is missing beside the EXE. No NAS: UTM Classroom is not on the EA office share."""
+    github = {
+        "owner": "trojanforce96",
+        "repo": "EA_ASCII",
+        "tag": "update-UTM_Coordinate_Wizard_Lecturer",
+        "token_env": "EA_GITHUB_TOKEN",
+    }
+    try:
+        _tools = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tools")
+        if _tools not in sys.path:
+            sys.path.insert(0, _tools)
+        from ea_update_config import load_github_settings, release_tag_for_app
+
+        settings = load_github_settings()
+        if settings.get("owner"):
+            github = {
+                "owner": settings["owner"],
+                "repo": settings["repo"],
+                "tag": release_tag_for_app("UTM_Coordinate_Wizard_Lecturer"),
+                "token_env": "EA_GITHUB_TOKEN",
+            }
+    except Exception:
+        pass
+    return {
+        "manifest_file": "manifest.json",
+        "check_on_startup": True,
+        "auto_apply": False,
+        "timeout": 30,
+        "download_timeout": 300,
+        "github": github,
+    }
+
+
+DEFAULT_UPDATE_CONFIG = _default_update_config()
 
 
 def _help_text():
@@ -1031,9 +1070,9 @@ class CassiniApp(tk.Tk):
         self._t = dict(THEMES[self._theme_mode])
         self._result_cards = []
         titles = {
-            "lecturer": f"{UTM_APP_NAME} — Lecturer Edition",
-            "student": f"{UTM_APP_NAME} — Student Edition",
-            "dev": f"{UTM_APP_NAME} — Dev",
+            "lecturer": f"{UTM_APP_NAME} — Lecturer Edition  v{APP_VERSION}",
+            "student": f"{UTM_APP_NAME} — Student Edition  v{APP_VERSION}",
+            "dev": f"{UTM_APP_NAME} — Dev  v{APP_VERSION}",
         }
         self.title(titles.get(edition(), titles["dev"]))
         self.resizable(True, True)
@@ -1045,6 +1084,64 @@ class CassiniApp(tk.Tk):
         self.update_idletasks()
         w, h = self.winfo_width(), self.winfo_height()
         self.geometry(f"{w}x{h}+{(self.winfo_screenwidth()-w)//2}+{(self.winfo_screenheight()-h)//2}")
+        self._schedule_update_check()
+
+    def _schedule_update_check(self):
+        """Cursor-style: let UI settle, then check in background."""
+        if getattr(self, "_update_check_started", False):
+            return
+        self._update_check_started = True
+        self.after(3000, self._start_update_check)
+
+    def _start_update_check(self):
+        """Lecturer EXE only — private GitHub Releases (token via EA_GITHUB_TOKEN).
+
+        Student edition and dev scripts never check: students get fresh zips
+        from the lecturer instead.
+        """
+        if not (getattr(sys, "frozen", False) and is_lecturer()):
+            return
+
+        def _is_local_disk(path: str) -> bool:
+            p = (path or "").strip()
+            return bool(p) and not (p.startswith("\\\\") or p.startswith("//"))
+
+        def _worker():
+            try:
+                import json
+                from ea_update import (
+                    check_for_update,
+                    present_update,
+                    stage_update,
+                    read_local_version,
+                    load_config,
+                    config_path,
+                )
+                cfg = load_config()
+                if not cfg:
+                    cfg = dict(DEFAULT_UPDATE_CONFIG)
+                    try:
+                        cfg_file = config_path()
+                        if _is_local_disk(os.path.dirname(cfg_file)):
+                            with open(cfg_file, "w", encoding="utf-8") as f:
+                                json.dump(cfg, f, indent=2)
+                                f.write("\n")
+                    except OSError:
+                        pass
+                info = check_for_update(
+                    read_local_version(APP_VERSION),
+                    cfg if cfg else None,
+                )
+                if not info:
+                    return
+                try:
+                    stage_update(info)
+                except Exception:
+                    pass
+                self.after(0, lambda i=info: present_update(self, i))
+            except Exception:
+                pass
+        threading.Thread(target=_worker, daemon=True).start()
 
     def _styles(self):
         t = self._t

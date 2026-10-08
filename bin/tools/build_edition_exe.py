@@ -12,7 +12,9 @@ Lecturer: loads Malaysia.xml beside exe, lecturer logo/icon, Distribute tab;
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import re
 import subprocess
 import sys
 
@@ -21,9 +23,12 @@ sys.stdout.reconfigure(encoding="utf-8")
 _TOOLS = os.path.dirname(os.path.abspath(__file__))
 BIN = os.path.dirname(_TOOLS)
 ROOT = os.path.dirname(BIN)
+EA_ROOT = os.path.dirname(ROOT)  # EA_ASCII — shared tooling + ea_github.json
 DIST = os.path.join(ROOT, "dist")
 EXE_OUT = os.path.join(ROOT, "exe")
 BRAND = os.path.join(BIN, "branding")
+UPDATE_ROOT = os.path.join(ROOT, "updates")
+LECTURER_APP_FOLDER = "UTM_Coordinate_Wizard_Lecturer"
 if BIN not in sys.path:
     sys.path.insert(0, BIN)
 from app_paths import GEOID_GFF_NAME, GEOID_GFF_LEGACY, GEOID_GSF_NAME
@@ -98,6 +103,72 @@ def _write_edition_txt(ed: str) -> str:
     return path
 
 
+def _read_app_version() -> str:
+    path = os.path.join(BIN, "utm_coordinate_wizard.py")
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+    m = re.search(r'^APP_VERSION\s*=\s*["\']([^"\']+)["\']', text, re.M)
+    if not m:
+        raise SystemExit("ERROR: APP_VERSION not found in bin/utm_coordinate_wizard.py")
+    return m.group(1)
+
+
+def _github_update_config() -> dict:
+    """GitHub-Releases-only update config for the lecturer exe (no NAS)."""
+    owner, repo = "trojanforce96", "EA_ASCII"
+    gh_json = os.path.join(EA_ROOT, "ea_github.json")
+    if os.path.isfile(gh_json):
+        try:
+            with open(gh_json, encoding="utf-8") as f:
+                data = json.load(f)
+            owner = str(data.get("owner", "") or owner).strip() or owner
+            repo = str(data.get("repo", "") or repo).strip() or repo
+        except (OSError, json.JSONDecodeError):
+            pass
+    return {
+        "manifest_file": "manifest.json",
+        "check_on_startup": True,
+        "auto_apply": False,
+        "timeout": 30,
+        "download_timeout": 300,
+        "github": {
+            "owner": owner,
+            "repo": repo,
+            "tag": f"update-{LECTURER_APP_FOLDER}",
+            "token_env": "EA_GITHUB_TOKEN",
+        },
+    }
+
+
+def _write_lecturer_update_package(version: str, exe_path: str):
+    """updates/UTM_Coordinate_Wizard_Lecturer/ — publish via publish_github_update.py."""
+    out = os.path.join(UPDATE_ROOT, LECTURER_APP_FOLDER)
+    os.makedirs(out, exist_ok=True)
+    exe_name = os.path.basename(exe_path)
+
+    with open(os.path.join(out, "version.txt"), "w", encoding="utf-8") as f:
+        f.write(version + "\n")
+
+    manifest = {
+        "app": "utm_coordinate_wizard_lecturer",
+        "version": version,
+        "exe_name": exe_name,
+        "changelog": "UTM Coordinate Wizard (Lecturer Edition) update.",
+        "files": [{"name": exe_name}],
+    }
+    with open(os.path.join(out, "manifest.json"), "w", encoding="utf-8") as f:
+        json.dump(manifest, f, indent=2)
+        f.write("\n")
+
+    with open(os.path.join(out, "ea_update.json"), "w", encoding="utf-8") as f:
+        json.dump(_github_update_config(), f, indent=2)
+        f.write("\n")
+
+    import shutil
+    shutil.copy2(exe_path, os.path.join(out, exe_name))
+    print(f"  Update package → {out}  (v{version})")
+
+
 def build(edition_name: str):
     edition_name = edition_name.lower()
     if edition_name not in ("student", "lecturer"):
@@ -106,11 +177,13 @@ def build(edition_name: str):
     exe_name = f"UTM_Coordinate_Wizard_{edition_name.capitalize()}"
     exe_path = os.path.join(EXE_OUT, f"{exe_name}.exe")
     work = os.path.join(DIST, f"build_utm_{edition_name}_work")
+    version = _read_app_version()
     os.makedirs(EXE_OUT, exist_ok=True)
 
     print()
     print("=" * 60)
     print(f"  BUILD — {edition_name.upper()} EDITION")
+    print(f"  Version {version}")
     print("=" * 60)
     print()
 
@@ -199,6 +272,7 @@ def build(edition_name: str):
         "--hidden-import=ui_theme",
         "--hidden-import=win_boot",
         "--hidden-import=student_pack",
+        "--hidden-import=ea_update",
         "--hidden-import=PIL",
         "--hidden-import=PIL.Image",
         "--hidden-import=PIL.ImageTk",
@@ -223,7 +297,10 @@ def build(edition_name: str):
     print("  DONE")
     print(f"  Exe  : {exe_path}")
     print(f"  Size : {size_mb:.1f} MB")
+    print(f"  Version : {version}")
     if edition_name == "lecturer":
+        _write_lecturer_update_package(version, exe_path)
+        print("  GitHub publish (after PC test): python bin/tools/publish_github_update.py UTM_Coordinate_Wizard_Lecturer")
         from app_paths import malaysia_params_dir
         xml_src = os.path.join(malaysia_params_dir(), "Malaysia.xml")
         xml_dst = os.path.join(EXE_OUT, "Malaysia.xml")
